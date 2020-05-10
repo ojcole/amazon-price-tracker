@@ -19,17 +19,27 @@ if (args.length < 2) {
 const vals = new Set();
 const priceline = parseInt(args[1]);
 const quiet = args.includes("--quiet");
+const newItem = args.includes("--new");
+const prime = args.includes("--prime");
 
 let product = args[0];
 let minprice = Number.POSITIVE_INFINITY;
 let val = -1;
 
 if (!product.includes("amazon")) {
-    product = `https://www.amazon.co.uk/gp/offer-listing/${product}/?condition=new&nonce=`;
-} else if (!product.includes("?")) {
-    product += "?nonce=";
-} else {
-    product += "&nonce=";
+    product = `https://www.amazon.co.uk/gp/offer-listing/${product}/?`;
+}
+
+if (!product.includes("?")) {
+    product += "?ie=UTF8";
+}
+
+if (newItem) {
+    product += "&condition=new&f_new=true";
+}
+
+if (prime) {
+    product += "&f_primeEligible=true";
 }
 
 const parseAndCheck = (str) => {
@@ -77,6 +87,6 @@ const rand = () => Math.floor(Math.random() * 10000);
 
     const success = await makeCheck(product + token);
 
-    if (success) setTimeout(main, 60000);
+    if (success) setTimeout(main, 30000);
     else setTimeout(main, 10000);
 })();
