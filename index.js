@@ -3,6 +3,9 @@ const { JSDOM } = require("jsdom");
 const player = require("play-sound")((opts = {}));
 const Base64 = require("crypto-js/enc-base64");
 const sha256 = require("crypto-js/sha256");
+const readline = require("readline");
+const stdin = process.stdin;
+
 const agent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36";
 const headers = {
@@ -21,9 +24,13 @@ const priceline = parseInt(args[1]);
 const quiet = args.includes("--quiet");
 const newItem = args.includes("--new");
 const prime = args.includes("--prime");
+const infoTime = 3600000;
+
+let time = Date.now();
 
 let product = args[0];
 let minprice = Number.POSITIVE_INFINITY;
+let maxprice = Number.NEGATIVE_INFINITY;
 let val = -1;
 
 if (!product.includes("amazon")) {
@@ -62,16 +69,17 @@ const makeCheck = (prod) => {
                     console.log("New Minimum Price:");
                 }
                 console.log(`£${newVal}`);
-                if (newVal <= priceline) {
-                    player.play(
-                        "alert.wav",
-                        { timeout: 10000, mplayer: ["-loop", 0] },
-                        (_) => {}
-                    );
-                }
+            }
+            if (newVal <= priceline) {
+                player.play(
+                    "alert.wav",
+                    { timeout: 10000, mplayer: ["-loop", 3] },
+                    (_) => {}
+                );
             }
             vals.add(newVal);
             minprice = Math.min(newVal, minprice);
+            maxprice = Math.max(newVal, maxprice);
 
             return true;
         })
@@ -84,7 +92,19 @@ const generateToken = () => {
 
 const rand = () => Math.floor(Math.random() * 10000);
 
+const logInfo = () => {
+    console.log(
+        `Current Price: £${val}, Peak Price: £${maxprice}, Lowest Price: £${minprice}`
+    );
+};
+
 (async function main() {
+    const now = Date.now();
+    if (now - time > infoTime) {
+        time = now;
+        logInfo();
+    }
+
     const token = generateToken();
 
     const success = await makeCheck(product + token);
@@ -92,3 +112,17 @@ const rand = () => Math.floor(Math.random() * 10000);
     if (success) setTimeout(main, 30000);
     else setTimeout(main, 10000);
 })();
+
+readline.emitKeypressEvents(stdin);
+
+stdin.setRawMode(true);
+
+stdin.on("keypress", (_, key) => {
+    if (key && key.name == "i") {
+        logInfo();
+    }
+
+    if (key && (key.name == "c" || key.name == "d") && key.ctrl) {
+        process.exit();
+    }
+});
