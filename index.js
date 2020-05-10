@@ -28,11 +28,9 @@ const makeCheck = (prod) => {
         .get(prod)
         .then((res) => {
             const newVal = parseAndCheck(res.data);
-
-            minprice = Math.min(newVal, minprice);
             if (newVal != val) {
                 val = newVal;
-                if (minprice == newVal) {
+                if (minprice > newVal) {
                     console.log("New Minimum Price:");
                 }
                 console.log(`£${newVal}`);
@@ -42,6 +40,7 @@ const makeCheck = (prod) => {
                     });
                 }
             }
+            minprice = Math.min(newVal, minprice);
         })
         .catch((err) => {});
 };
