@@ -5,16 +5,18 @@ const player = require("play-sound")((opts = {}));
 const Base64 = require("crypto-js/enc-base64");
 const sha256 = require("crypto-js/sha256");
 
-let minprice = Number.POSITIVE_INFINITY;
-let val = -1;
-
 if (args.length < 2) {
     console.error("invalid args, expected url and priceline");
     process.exit(1);
 }
 
+const vals = new Set();
 const product = args[0];
 const priceline = parseInt(args[1]);
+const quiet = args.includes("--quiet");
+
+let minprice = Number.POSITIVE_INFINITY;
+let val = -1;
 
 const parseAndCheck = (str) => {
     const doc = new JSDOM(str);
@@ -28,7 +30,7 @@ const makeCheck = (prod) => {
         .get(prod)
         .then((res) => {
             const newVal = parseAndCheck(res.data);
-            if (newVal != val) {
+            if (newVal != val && (!quiet || !vals.has(newVal))) {
                 val = newVal;
                 if (minprice > newVal) {
                     console.log("New Minimum Price:");
@@ -38,6 +40,7 @@ const makeCheck = (prod) => {
                     player.play("alert.wav", { timeout: 10000 }, (_) => {});
                 }
             }
+            vals.add(newVal);
             minprice = Math.min(newVal, minprice);
         })
         .catch((_) => {});
