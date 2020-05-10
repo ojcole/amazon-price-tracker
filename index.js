@@ -6,7 +6,7 @@ const sha256 = require("crypto-js/sha256");
 const agent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36";
 const headers = {
-    "User-Agent": "wow",
+    "User-Agent": agent,
 };
 
 const args = process.argv.slice(2);
@@ -72,13 +72,11 @@ const generateToken = () => {
 
 const rand = () => Math.floor(Math.random() * 10000);
 
-(function main() {
+(async function main() {
     const token = generateToken();
 
-    makeCheck(product + token).then((res) => {
-        if (res) setTimeout(main, 60000);
-        else setTimeout(main, 10000);
-    });
+    const success = await makeCheck(product + token);
 
-    setTimeout(main, 60000);
+    if (success) setTimeout(main, 60000);
+    else setTimeout(main, 10000);
 })();
