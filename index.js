@@ -42,6 +42,8 @@ if (prime) {
     product += "&f_primeEligible=true";
 }
 
+product += "&nonce=";
+
 const parseAndCheck = (str) => {
     const doc = new JSDOM(str);
     const elem = doc.window.document.getElementsByClassName("olpOfferPrice")[0];
