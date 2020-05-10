@@ -6,7 +6,7 @@ const sha256 = require("crypto-js/sha256");
 const agent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36";
 const headers = {
-    "User-Agent": agent,
+    "User-Agent": "wow",
 };
 
 const args = process.argv.slice(2);
@@ -40,10 +40,9 @@ const parseAndCheck = (str) => {
 };
 
 const makeCheck = (prod) => {
-    axios
+    return axios
         .get(prod, { headers })
         .then((res) => {
-            console.log(res);
             const newVal = parseAndCheck(res.data);
             if (newVal != val && (!quiet || !vals.has(newVal))) {
                 val = newVal;
@@ -61,8 +60,10 @@ const makeCheck = (prod) => {
             }
             vals.add(newVal);
             minprice = Math.min(newVal, minprice);
+
+            return true;
         })
-        .catch((_) => {});
+        .catch((_) => false);
 };
 
 const generateToken = () => {
@@ -74,7 +75,10 @@ const rand = () => Math.floor(Math.random() * 10000);
 (function main() {
     const token = generateToken();
 
-    makeCheck(product + token);
+    makeCheck(product + token).then((res) => {
+        if (res) setTimeout(main, 60000);
+        else setTimeout(main, 10000);
+    });
 
-    setTimeout(main, 120000);
+    setTimeout(main, 60000);
 })();
