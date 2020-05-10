@@ -35,14 +35,12 @@ const makeCheck = (prod) => {
                 }
                 console.log(`£${newVal}`);
                 if (newVal <= priceline) {
-                    player.play("alert.wav", { timeout: 1000 }, function (err) {
-                        if (err) throw err;
-                    });
+                    player.play("alert.wav", { timeout: 10000 }, (_) => {});
                 }
             }
             minprice = Math.min(newVal, minprice);
         })
-        .catch((err) => {});
+        .catch((_) => {});
 };
 
 const generateToken = () => {
