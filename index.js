@@ -76,5 +76,5 @@ const rand = () => Math.floor(Math.random() * 10000);
 
     makeCheck(product + token);
 
-    setTimeout(main, 10000);
+    setTimeout(main, 120000);
 })();
