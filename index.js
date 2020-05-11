@@ -6,6 +6,7 @@ const sha256 = require("crypto-js/sha256");
 const readline = require("readline");
 const stdin = process.stdin;
 
+const initialErrorDelay = 10000;
 const agent =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36";
 const headers = {
@@ -26,7 +27,9 @@ const newItem = args.includes("--new");
 const prime = args.includes("--prime");
 const infoTime = 3600000;
 
+let errorCount = 0;
 let time = Date.now();
+let errorDelay = initialErrorDelay;
 
 let product = args[0];
 let minprice = Number.POSITIVE_INFINITY;
@@ -51,11 +54,16 @@ if (prime) {
 
 product += "&nonce=";
 
+const parseCost = (elem) =>
+    elem == undefined ? 0 : Number(elem.innerHTML.replace(/[^0-9.-]/g, ""));
 const parseAndCheck = (str) => {
     const doc = new JSDOM(str);
-    const elem = doc.window.document.getElementsByClassName("olpOfferPrice")[0];
+    const parent = doc.window.document.getElementsByClassName("olpOffer")[0];
 
-    return Number(elem.innerHTML.replace(/[^0-9,.-]/g, ""));
+    const priceElem = parent.getElementsByClassName("olpOfferPrice")[0];
+    const shippingElem = parent.getElementsByClassName("olpShippingPrice")[0];
+
+    return parseCost(priceElem) + parseCost(shippingElem);
 };
 
 const makeCheck = (prod) => {
@@ -83,7 +91,9 @@ const makeCheck = (prod) => {
 
             return true;
         })
-        .catch((_) => false);
+        .catch((err) => {
+            return false;
+        });
 };
 
 const generateToken = () => {
@@ -109,8 +119,29 @@ const logInfo = () => {
 
     const success = await makeCheck(product + token);
 
-    if (success) setTimeout(main, 30000);
-    else setTimeout(main, 10000);
+    if (success) {
+        setTimeout(main, 30000);
+
+        errorCount = 0;
+
+        if (errorDelay > initialErrorDelay) {
+            errorDelay = initialErrorDelay;
+
+            console.log("Recovered from slow mode");
+        }
+    } else {
+        errorCount++;
+
+        if (errorCount > 5 && errorDelay === initialErrorDelay) {
+            if (errorDelay === initialErrorDelay) {
+                console.log("5 errors in a row, entering slow mode");
+            }
+
+            errorDelay = (initialErrorDelay * errorCount) / 5;
+        }
+
+        setTimeout(main, errorDelay);
+    }
 })();
 
 readline.emitKeypressEvents(stdin);
