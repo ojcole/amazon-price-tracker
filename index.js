@@ -1,6 +1,5 @@
 const axios = require("axios");
 const { JSDOM } = require("jsdom");
-const player = require("play-sound")((opts = {}));
 const Base64 = require("crypto-js/enc-base64");
 const sha256 = require("crypto-js/sha256");
 const readline = require("readline");
@@ -37,7 +36,7 @@ let maxprice = Number.NEGATIVE_INFINITY;
 let val = -1;
 
 if (!product.includes("amazon")) {
-    product = `https://www.amazon.co.uk/gp/offer-listing/${product}/?`;
+    product = `https://www.amazon.co.uk/gp/offer-listing/${product}/`;
 }
 
 if (!product.includes("?")) {
@@ -66,6 +65,14 @@ const parseAndCheck = (str) => {
     return parseCost(priceElem) + parseCost(shippingElem);
 };
 
+const beep = (count, delay) => {
+    if (count != 0) {
+        process.stdout.write("\x07");
+
+        setTimeout(() => beep(count - 1, delay), delay);
+    }
+};
+
 const makeCheck = (prod) => {
     return axios
         .get(prod, { headers })
@@ -79,11 +86,7 @@ const makeCheck = (prod) => {
                 console.log(`£${newVal}`);
             }
             if (newVal <= priceline) {
-                player.play(
-                    "alert.wav",
-                    { timeout: 10000, mplayer: ["-loop", 3] },
-                    (_) => {}
-                );
+                beep(50, 100);
             }
             vals.add(newVal);
             minprice = Math.min(newVal, minprice);
